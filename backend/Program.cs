@@ -41,4 +41,7 @@ using (var scope = app.Services.CreateScope())
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
+app.MapGet("/api/tasks", async (AppDbContext db) =>
+    await db.Tasks.OrderByDescending(t => t.CreatedAt).ToListAsync());
+
 app.Run();
