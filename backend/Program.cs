@@ -81,6 +81,17 @@ app.MapPatch("/api/tasks/{id}/title", async (AppDbContext db, string id, UpdateT
     return Results.Ok(task);
 });
 
+app.MapPatch("/api/tasks/{id}/complete", async (AppDbContext db, string id) =>
+{
+    var task = await db.Tasks.FindAsync(id);
+    if (task is null)
+        return Results.Problem(detail: $"Task '{id}' not found.", statusCode: 404, title: "Not found");
+
+    task.Completed = !task.Completed;
+    await db.SaveChangesAsync();
+    return Results.Ok(task);
+});
+
 app.Run();
 
 record CreateTaskRequest(string Title);
