@@ -92,6 +92,17 @@ app.MapPatch("/api/tasks/{id}/complete", async (AppDbContext db, string id) =>
     return Results.Ok(task);
 });
 
+app.MapDelete("/api/tasks/{id}", async (AppDbContext db, string id) =>
+{
+    var task = await db.Tasks.FindAsync(id);
+    if (task is null)
+        return Results.Problem(detail: $"Task '{id}' not found.", statusCode: 404, title: "Not found");
+
+    db.Tasks.Remove(task);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
 app.Run();
 
 record CreateTaskRequest(string Title);
