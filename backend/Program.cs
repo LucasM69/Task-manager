@@ -64,6 +64,24 @@ app.MapPost("/api/tasks", async (AppDbContext db, CreateTaskRequest req) =>
     return Results.Created($"/api/tasks/{task.Id}", task);
 });
 
+app.MapPatch("/api/tasks/{id}/title", async (AppDbContext db, string id, UpdateTitleRequest req) =>
+{
+    var task = await db.Tasks.FindAsync(id);
+    if (task is null)
+        return Results.Problem(detail: $"Task '{id}' not found.", statusCode: 404, title: "Not found");
+
+    if (string.IsNullOrWhiteSpace(req.Title))
+        return Results.Problem(detail: "Title cannot be empty.", statusCode: 400, title: "Validation failed");
+
+    if (req.Title.Length > 200)
+        return Results.Problem(detail: "Title cannot exceed 200 characters.", statusCode: 400, title: "Validation failed");
+
+    task.Title = req.Title.Trim();
+    await db.SaveChangesAsync();
+    return Results.Ok(task);
+});
+
 app.Run();
 
 record CreateTaskRequest(string Title);
+record UpdateTitleRequest(string Title);
