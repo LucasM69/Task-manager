@@ -44,4 +44,26 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 app.MapGet("/api/tasks", async (AppDbContext db) =>
     await db.Tasks.OrderByDescending(t => t.CreatedAt).ToListAsync());
 
+app.MapPost("/api/tasks", async (AppDbContext db, CreateTaskRequest req) =>
+{
+    if (string.IsNullOrWhiteSpace(req.Title))
+        return Results.Problem(detail: "Title cannot be empty.", statusCode: 400, title: "Validation failed");
+
+    if (req.Title.Length > 200)
+        return Results.Problem(detail: "Title cannot exceed 200 characters.", statusCode: 400, title: "Validation failed");
+
+    var task = new TaskItem
+    {
+        Id = Guid.NewGuid().ToString(),
+        Title = req.Title.Trim(),
+        Completed = false,
+        CreatedAt = DateTime.UtcNow
+    };
+    db.Tasks.Add(task);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/tasks/{task.Id}", task);
+});
+
 app.Run();
+
+record CreateTaskRequest(string Title);
